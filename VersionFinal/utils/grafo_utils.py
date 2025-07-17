@@ -133,7 +133,7 @@ def _edge_in_path(edge, path):
     return False
 
 
-def camino_optimo_con_costera(origen='Ibarra', destino='Loja'):
+def camino_optimo_con_costera(origen, destino):
     G = construir_grafo()
 
     try:
