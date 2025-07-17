@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Ciudades{% endblock %}
+
+{% block content %}
+<div class="row">
+  <!-- Formulario para agregar ciudad -->
+  <div class="col-md-4">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-plus"></i> Agregar Nueva Ciudad
+        </h3>
+      </div>
+      <form method="post" action="{{ url_for('admin.agregar_ciudad_route') }}">
+        <div class="card-body">
+          <div class="form-group">
+            <label for="nombre">Nombre de la Ciudad</label>
+            <input type="text" name="nombre" id="nombre" class="form-control" required placeholder="Ej: Quito">
+          </div>
+          
+          <div class="form-group">
+            <label for="provincia">Provincia</label>
+            <input type="text" name="provincia" id="provincia" class="form-control" required placeholder="Ej: Pichincha" list="provincias">
+            <datalist id="provincias">
+              {% for provincia in provincias %}
+                <option value="{{ provincia }}">
+              {% endfor %}
+            </datalist>
+          </div>
+          
+          <div class="form-group">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="es_costera" id="es_costera">
+              <label class="form-check-label" for="es_costera">
+                <i class="fas fa-water"></i> Es ciudad costera
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Agregar Ciudad
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Lista de ciudades existentes -->
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-city"></i> Ciudades Registradas ({{ ciudades|length }})
+        </h3>
+      </div>
+      <div class="card-body p-0">
+        {% if ciudades %}
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Ciudad</th>
+              <th>Provincia</th>
+              <th>Tipo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ciudad in ciudades %}
+            <tr>
+              <td>
+                <strong>{{ ciudad.nombre }}</strong>
+              </td>
+              <td>{{ ciudad.provincia }}</td>
+              <td>
+                {% if ciudad.es_costera %}
+                  <span class="badge badge-info">
+                    <i class="fas fa-water"></i> Costera
+                  </span>
+                {% else %}
+                  <span class="badge badge-secondary">
+                    <i class="fas fa-mountain"></i> Interior
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" action="{{ url_for('admin.eliminar_ciudad_route', ciudad_id=ciudad.id) }}" style="display: inline;">
+                  <button type="submit" class="btn btn-sm btn-danger" 
+                          onclick="return confirm('¿Estás seguro de eliminar {{ ciudad.nombre }}?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="text-center p-4">
+          <i class="fas fa-city fa-3x text-muted mb-3"></i>
+          <p class="text-muted">No hay ciudades registradas</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mensajes flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert">
+          <span>&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Rutas{% endblock %}
+
+{% block content %}
+<div class="row">
+  <!-- Formulario para agregar ruta -->
+  <div class="col-md-5">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-plus"></i> Agregar Nueva Ruta
+        </h3>
+      </div>
+      <form method="post" action="{{ url_for('admin.agregar_ruta_route') }}">
+        <div class="card-body">
+          <div class="form-group">
+            <label for="ciudad_origen_id">Ciudad de Origen</label>
+            <select name="ciudad_origen_id" id="ciudad_origen_id" class="form-control" required>
+              <option value="">Seleccionar ciudad...</option>
+              {% for ciudad in ciudades %}
+                <option value="{{ ciudad.id }}">{{ ciudad.nombre }} ({{ ciudad.provincia }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="ciudad_destino_id">Ciudad de Destino</label>
+            <select name="ciudad_destino_id" id="ciudad_destino_id" class="form-control" required>
+              <option value="">Seleccionar ciudad...</option>
+              {% for ciudad in ciudades %}
+                <option value="{{ ciudad.id }}">{{ ciudad.nombre }} ({{ ciudad.provincia }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="costo">Costo/Distancia</label>
+            <div class="input-group">
+              <input type="number" name="costo" id="costo" class="form-control" step="0.1" min="0.1" required placeholder="25.5">
+              <div class="input-group-append">
+                <span class="input-group-text">km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Agregar Ruta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Lista de rutas existentes -->
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-route"></i> Rutas Registradas ({{ rutas|length }})
+        </h3>
+      </div>
+      <div class="card-body p-0">
+        {% if rutas %}
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th>Costo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ruta in rutas %}
+            <tr>
+              <td>
+                <strong>{{ ruta.ciudad_origen_rel.nombre }}</strong>
+                <br><small class="text-muted">{{ ruta.ciudad_origen_rel.provincia }}</small>
+              </td>
+              <td>
+                <strong>{{ ruta.ciudad_destino_rel.nombre }}</strong>
+                <br><small class="text-muted">{{ ruta.ciudad_destino_rel.provincia }}</small>
+              </td>
+              <td>
+                <span class="badge badge-info">{{ ruta.costo }} km</span>
+              </td>
+              <td>
+                <form method="post" action="{{ url_for('admin.eliminar_ruta_route', ruta_id=ruta.id) }}" style="display: inline;">
+                  <button type="submit" class="btn btn-sm btn-danger" 
+                          onclick="return confirm('¿Estás seguro de eliminar esta ruta?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="text-center p-4">
+          <i class="fas fa-route fa-3x text-muted mb-3"></i>
+          <p class="text-muted">No hay rutas registradas</p>
+          {% if ciudades|length < 2 %}
+            <small class="text-muted">Necesitas al menos 2 ciudades para crear rutas</small>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mensajes flash -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert">
+          <span>&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Evitar que origen y destino sean iguales
+document.getElementById('ciudad_origen_id').addEventListener('change', function() {
+    var origen = this.value;
+    var destino = document.getElementById('ciudad_destino_id');
+    
+    // Habilitar todas las opciones primero
+    for (var i = 0; i < destino.options.length; i++) {
+        destino.options[i].disabled = false;
+    }
+    
+    // Deshabilitar la ciudad de origen en el destino
+    if (origen) {
+        for (var i = 0; i < destino.options.length; i++) {
+            if (destino.options[i].value === origen) {
+                destino.options[i].disabled = true;
+                if (destino.value === origen) {
+                    destino.value = '';
+                }
+                break;
+            }
+        }
+    }
+});
+
+document.getElementById('ciudad_destino_id').addEventListener('change', function() {
+    var destino = this.value;
+    var origen = document.getElementById('ciudad_origen_id');
+    
+    // Habilitar todas las opciones primero
+    for (var i = 0; i < origen.options.length; i++) {
+        origen.options[i].disabled = false;
+    }
+    
+    // Deshabilitar la ciudad de destino en el origen
+    if (destino) {
+        for (var i = 0; i < origen.options.length; i++) {
+            if (origen.options[i].value === destino) {
+                origen.options[i].disabled = true;
+                if (origen.value === destino) {
+                    origen.value = '';
+                }
+                break;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

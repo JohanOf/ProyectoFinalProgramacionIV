@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Ruta Predeterminada{% endblock %}
+
+{% block content %}
+<div class="row">
+  <!-- Información de la ruta -->
+  <div class="col-md-6">
+    <div class="card card-info">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-route"></i> Ruta Predeterminada: Ibarra → Loja
+        </h3>
+      </div>
+      <div class="card-body">
+        {% if resultado.camino %}
+          <table class="table table-borderless">
+            <tr>
+              <td><strong><i class="fas fa-map-signs"></i> Ruta:</strong></td>
+              <td>
+                {% for ciudad in resultado.camino %}
+                  {% if not loop.first %}<i class="fas fa-arrow-right text-primary"></i>{% endif %}
+                  <span class="badge badge-light">{{ ciudad }}</span>
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <td><strong><i class="fas fa-ruler"></i> Distancia Total:</strong></td>
+              <td><span class="badge badge-info">{{ resultado.costo }} km</span></td>
+            </tr>
+            <tr>
+              <td><strong><i class="fas fa-water"></i> Estado:</strong></td>
+              <td>
+                {% if resultado.valido %}
+                  <span class="badge badge-success">
+                    <i class="fas fa-check-circle"></i> Incluye ciudad costera
+                  </span>
+                {% else %}
+                  <span class="badge badge-danger">
+                    <i class="fas fa-times-circle"></i> No incluye ciudades costeras
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+          </table>
+          
+          <!-- Detalles del recorrido -->
+          <div class="mt-3">
+            <h6><i class="fas fa-list-ol"></i> Detalles del Recorrido</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-striped">
+                <thead>
+                  <tr>
+                    <th>Paso</th>
+                    <th>Ciudad</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ciudad in resultado.camino %}
+                  <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                      <i class="fas fa-map-marker-alt"></i> {{ ciudad }}
+                    </td>
+                    <td>
+                      {% if ciudad in ['Manta', 'Portoviejo', 'Guayaquil'] %}
+                        <i class="fas fa-water text-info" title="Ciudad costera"></i>
+                        <small class="text-info">Costera</small>
+                      {% else %}
+                        <i class="fas fa-mountain text-muted" title="Ciudad del interior"></i>
+                        <small class="text-muted">Interior</small>
+                      {% endif %}
+                      {% if loop.last %}
+                        <span class="badge badge-success ml-2">Destino</span>
+                      {% elif loop.first %}
+                        <span class="badge badge-primary ml-2">Origen</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> No existe ruta de Ibarra a Loja.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Visualización del grafo -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-project-diagram"></i> Visualización del Grafo
+        </h3>
+      </div>
+      <div class="card-body text-center">
+        {% if resultado.camino %}
+          <img src="{{ url_for('grafo.ver_grafo', camino=resultado.camino|join(',')) }}" 
+               class="img-fluid border rounded shadow" 
+               alt="Grafo de la ruta predeterminada"
+               style="max-height: 400px;">
+          <div class="mt-3">
+            <a href="{{ url_for('grafo.ver_grafo', camino=resultado.camino|join(',')) }}" 
+               target="_blank" 
+               class="btn btn-primary">
+              <i class="fas fa-external-link-alt"></i> Ver en pantalla completa
+            </a>
+            <a href="{{ url_for('camino_buscar.camino_formulario') }}" 
+               class="btn btn-outline-primary">
+              <i class="fas fa-search"></i> Buscar otra ruta
+            </a>
+          </div>
+        {% else %}
+          <div class="text-center">
+            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+            <p class="text-muted">No se puede mostrar el grafo sin una ruta válida</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

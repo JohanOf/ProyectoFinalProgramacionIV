@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Generador de Rutas{% endblock %}
+
+{% block content %}
+<div class="row">
+  <!-- Formulario -->
+  <div class="col-md-4">
+    <div class="card card-primary">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-route"></i> Encontrar la Ruta más Corta
+        </h3>
+      </div>
+      <form method="post">
+        <div class="card-body">
+          <div class="form-group">
+            <label for="origen">
+              <i class="fas fa-map-marker-alt text-success"></i> Ciudad de Origen
+            </label>
+            <select name="origen" id="origen" class="form-control" required>
+              <option value="">Seleccionar ciudad...</option>
+              {% for ciudad in ciudades %}
+                <option value="{{ ciudad }}"
+                  {% if request.form.origen == ciudad %}selected{% endif %}>
+                  {{ ciudad }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="destino">
+              <i class="fas fa-flag-checkered text-danger"></i> Ciudad de Destino
+            </label>
+            <select name="destino" id="destino" class="form-control" required>
+              <option value="">Seleccionar ciudad...</option>
+              {% for ciudad in ciudades %}
+                <option value="{{ ciudad }}"
+                  {% if request.form.destino == ciudad %}selected{% endif %}>
+                  {{ ciudad }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="card-footer">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-search"></i> Calcular Ruta Óptima
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Enlaces de administración -->
+    <div class="card card-info mt-3">
+      <div class="card-header">
+        <h3 class="card-title">
+          <i class="fas fa-cog"></i> Administración
+        </h3>
+      </div>
+      <div class="card-body">
+        <a href="{{ url_for('admin.ciudades') }}" class="btn btn-info btn-sm btn-block">
+          <i class="fas fa-city"></i> Gestionar Ciudades
+        </a>
+        <a href="{{ url_for('admin.rutas') }}" class="btn btn-info btn-sm btn-block">
+          <i class="fas fa-route"></i> Gestionar Rutas
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  <div class="col-md-8">
+    {% if resultado %}
+    <div class="card">
+      <div class="card-header bg-primary">
+        <h3 class="card-title text-white">
+          <i class="fas fa-route"></i> Resultado de la Búsqueda
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h5><i class="fas fa-map-signs"></i> Información de la Ruta</h5>
+            <table class="table table-borderless">
+              <tr>
+                <td><strong>Ruta:</strong></td>
+                <td>
+                  {% for ciudad in resultado.camino %}
+                    {% if not loop.first %}<i class="fas fa-arrow-right text-primary"></i>{% endif %}
+                    <span class="badge badge-light">{{ ciudad }}</span>
+                  {% endfor %}
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Distancia Total:</strong></td>
+                <td><span class="badge badge-info">{{ resultado.costo }} km</span></td>
+              </tr>
+              <tr>
+                <td><strong>Estado:</strong></td>
+                <td>
+                  {% if resultado.valido %}
+                    <span class="badge badge-success">
+                      <i class="fas fa-check-circle"></i> Incluye ciudad costera
+                    </span>
+                  {% else %}
+                    <span class="badge badge-warning">
+                      <i class="fas fa-exclamation-triangle"></i> No incluye ciudades costeras
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <h5><i class="fas fa-project-diagram"></i> Visualización del Grafo</h5>
+            <div class="text-center">
+              <img src="{{ url_for('grafo.ver_grafo', camino=resultado.camino|join(',')) }}" 
+                   class="img-fluid border rounded shadow" 
+                   alt="Grafo de la ruta"
+                   style="max-height: 300px;">
+            </div>
+            <div class="mt-2 text-center">
+              <a href="{{ url_for('grafo.ver_grafo', camino=resultado.camino|join(',')) }}" 
+                 target="_blank" 
+                 class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-external-link-alt"></i> Ver en pantalla completa
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Detalles del camino -->
+        <div class="mt-3">
+          <h6><i class="fas fa-list-ol"></i> Detalles del Recorrido</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-striped">
+              <thead>
+                <tr>
+                  <th>Paso</th>
+                  <th>Ciudad</th>
+                  <th>Tramo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ciudad in resultado.camino %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>
+                    <i class="fas fa-map-marker-alt"></i> {{ ciudad }}
+                    {% if ciudad in ['Manta', 'Portoviejo', 'Guayaquil'] %}
+                      <i class="fas fa-water text-info" title="Ciudad costera"></i>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if not loop.last %}
+                      <small class="text-muted">Hacia {{ resultado.camino[loop.index] }}</small>
+                    {% else %}
+                      <span class="badge badge-success">Destino final</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <!-- Estado inicial sin resultados -->
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-map fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">Calculadora de Rutas Óptimas</h4>
+        <p class="text-muted">Selecciona una ciudad de origen y destino para calcular la ruta más corta</p>
+        <p class="text-muted"><small>Utiliza el algoritmo de Dijkstra para encontrar el camino óptimo</small></p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Evitar que origen y destino sean iguales
+document.getElementById('origen').addEventListener('change', function() {
+    var origen = this.value;
+    var destino = document.getElementById('destino');
+    
+    // Habilitar todas las opciones primero
+    for (var i = 0; i < destino.options.length; i++) {
+        destino.options[i].disabled = false;
+    }
+    
+    // Deshabilitar la ciudad de origen en el destino
+    if (origen) {
+        for (var i = 0; i < destino.options.length; i++) {
+            if (destino.options[i].value === origen) {
+                destino.options[i].disabled = true;
+                if (destino.value === origen) {
+                    destino.value = '';
+                }
+                break;
+            }
+        }
+    }
+});
+
+document.getElementById('destino').addEventListener('change', function() {
+    var destino = this.value;
+    var origen = document.getElementById('origen');
+    
+    // Habilitar todas las opciones primero
+    for (var i = 0; i < origen.options.length; i++) {
+        origen.options[i].disabled = false;
+    }
+    
+    // Deshabilitar la ciudad de destino en el origen
+    if (destino) {
+        for (var i = 0; i < origen.options.length; i++) {
+            if (origen.options[i].value === destino) {
+                origen.options[i].disabled = true;
+                if (origen.value === destino) {
+                    origen.value = '';
+                }
+                break;
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
